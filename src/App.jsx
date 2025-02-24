@@ -1,11 +1,14 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
 
 function App() {
   const [passwordLength, setPasswordLength] = useState(8);
   const [numberAllowed, setNumberAllowed] = useState(false);
   const [charAllowed, setCharAllowed] = useState(false);
-  const [password, setPassword] = useState();
+  const [password, setPassword] = useState("");
+  const [isPasswordCopied, setIsPasswordCopied] = useState(false);
+
+  const passwordRef = useRef(null);
 
   // using useCallback so that it can memoize the function as it will be used again and again
   const passwordGenerator = useCallback(() => {
@@ -29,6 +32,22 @@ function App() {
     setPassword(pass);
   }, [passwordLength, numberAllowed, charAllowed, setPassword]);
 
+  const copyPasswordToClipboard = useCallback(() => {
+    //to hightlight the copied password in input field
+    passwordRef.current.selectionStart = 0;
+    passwordRef.current.selectionEnd = 999;
+    passwordRef.current?.select();
+
+    window.navigator.clipboard.writeText(passwordRef.current.value);
+
+    setIsPasswordCopied(true);
+  }, [password]);
+
+  // useEffect to control the state of isPasswordCopied
+  useEffect(() => {
+    setIsPasswordCopied(false);
+  }, [password]);
+
   useEffect(() => {
     passwordGenerator();
   }, [passwordLength, numberAllowed, charAllowed, passwordGenerator]);
@@ -44,12 +63,18 @@ function App() {
             className="outline-none w-full py-1 px-3 bg-white placeholder-gray-400"
             placeholder="Password"
             readOnly
+            ref={passwordRef}
           />
-          <button className="bg-blue-700 outline-none text-white px-3 py-0.5 shrink-0 cursor-pointer">
-            Copy
+          <button
+            className={`outline-none text-white px-3 py-0.5 shrink-0 cursor-pointer ${
+              isPasswordCopied ? "bg-blue-400" : "bg-blue-700"
+            }`}
+            onClick={copyPasswordToClipboard}
+          >
+            {isPasswordCopied ? "Copied!" : "Copy"}
           </button>
         </div>
-        <div className="flex text-sm gap-x-2">
+        <div className="flex flex-col sm:flex-row text-sm gap-2">
           <div className="flex items-center gap-x-1">
             <input
               type="range"
